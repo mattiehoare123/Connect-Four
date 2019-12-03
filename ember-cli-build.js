@@ -1,6 +1,6 @@
-'use strict';
+"use strict";
 
-const EmberApp = require('ember-cli/lib/broccoli/ember-app');
+const EmberApp = require("ember-cli/lib/broccoli/ember-app");
 
 module.exports = function(defaults) {
   let app = new EmberApp(defaults, {
@@ -19,6 +19,10 @@ module.exports = function(defaults) {
   // modules that you would like to import into your application
   // please specify an object with the list of modules as keys
   // along with the exports of each module as its value.
-
+  app.import("node_modules/easeljs/lib/easeljs.min.js");
+  app.import("node_modules/tweenjs/lib/tweenjs.min.js");
+  app.import("node_modules/soundjs/lib/soundjs.min.js");
+  // app.import("node_modules/createjs-module/createjs.js");
+  // app.import("node_modules/createjs/builds/1.0.0/createjs.min.js");
   return app.toTree();
 };

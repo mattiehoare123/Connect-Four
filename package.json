@@ -48,5 +48,12 @@
   },
   "engines": {
     "node": "8.* || >= 10.*"
+  },
+  "dependencies": {
+    "createjs": "^1.0.1",
+    "createjs-module": "^0.8.3",
+    "easeljs": "^1.0.2",
+    "soundjs": "^1.0.1",
+    "tweenjs": "^1.0.2"
   }
 }

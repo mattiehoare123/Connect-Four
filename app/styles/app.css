@@ -1,7 +1,11 @@
 /* Generic Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 body {
-  font-family: monospace;
-  font-size: 12pt;
+  font-family: 'Audiowide', cursive;
 }
 .float-left {
   float: left;
@@ -17,13 +21,13 @@ a {
 }
 /* Fixed layout for the application */
 #app {
-  max-width: 400px;
+  max-width: 950px;
   background: #000000;
-  border: 2px solid #ff1493;
+  border: 2px solid #1869F7;
 }
 /* Header styling */
 header h1 {
-  background: #ff1493;
+  background: #1869F7;
   color: #ffffff;
   margin: 0;
   padding: 0.5rem;
@@ -33,10 +37,133 @@ header h1 a {
   text-decoration: none;
 }
 /* Main game area styling */
+div {
+  color: white;
+}
+button {
+  display: block;
+  margin: .5em auto 0;
+  color: white;
+  font-size: 1rem;
+  padding: .8em;
+  border-radius: .5em;
+  width: 150px;
+  background-color: #F03C42;
+}
+h2 {
+  color: white;
+}
+.start_button {
+  /* position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 250px; */
+}
+.flex {
+  text-align: center;
+  width: 700px;
+}
+.flex h2 {
+  margin: .5em 0;
+  font-size: 2rem;
+}
+.logo {
+  width: 350px;
+  height: 90px;
+}
+.player_box {
+  width: 200px;
+  height: 150px;
+  background-color: black;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  right: 35px;
+  align-items: center;
+  position: absolute;
+  border: 2px solid #1D90FF;
+  border-radius: 5px;
+  font-size: 1.8rem;
+}
+.player_box > div {
+  display: flex;
+}
+.player_box div p:first-child {
+  margin-right: .25em;
+}
+.player_box--1 {
+  top: 90px;
+}
+.player_box--2 {
+  top: 300px;
+}
+.player_circle {
+  width: 35px;
+  height: 35px;
+}
+.winner {
+  margin: 0 auto;
+  text-align: center;
+  font-size: 1.875rem;
+}
+.big {
+  font-size: 5rem;
+}
+.restart_button {
+  border: none;
+  background: none;
+  transform: .8s;
+}
+.restart_img {
+  border: 2px solid #1D90FF;
+  position: absolute;
+  right: 40px;
+  top: 490px;
+  padding: .25em .8em;
+  border-radius: 5px;
+  transition: 1s;
+  /* transform: rotate(40deg); */
+}
+.button_rotate {
+  margin: 0 auto;
+  width: 50px;
+  height: 50px;
+  transition: 1s;
+  transform: rotate(400deg);
+}
+/*
+@media all and (max-width: 800px) {
+  .mobile {
+    display: block!important;
+  }
+  .desktop {
+    display: none!important;
+  }
+}
+
+/* Mobile */
+/* .mobile {
+  display: none;
+}
+.desktop {
+  display: block;
+} */
+
+.player_circle--mobile {
+  height: 40px;
+  width: 40px;
+  display: block;
+  margin: .5em auto 0;
+}
+.restart_img--mobile {
+  height: 40px;
+  width: 40px;
+  margin-top: .5em;
+}
 article {
-  height: 400px;
-  overflow: auto;
-  color: #ffffff;
+  height: 620px;
+  /* overflow: auto; */
+  color: #000000;
   padding: 0.5rem;
   position: relative;
 }
@@ -45,7 +172,7 @@ article h2 {
 }
 /* Footer styling */
 footer {
-  background: #ff1493;
+  background: #1869F7;
   color: #ffffff;
   font-size: 0.6rem;
   padding: 0.2rem 0.3rem;
