@@ -1,5 +1,5 @@
 import Component from "@ember/component";
-
+// The function clones the state matrix which helps in the minimax algrorithm as it holds all the possible moves
 function deepClone(state) {
   var new_state = [];
   for(var idx1 = 0; idx1 < state.length; idx1++) {
@@ -43,19 +43,30 @@ var patterns = [
     score: 50
   },
 ];
+/*
+The first two if statements check whether the x and y cooridates are the next in line coordinates
+then check that the next pattern element is still within the limits of it's state
+*/
 function match_pattern_at(state, pattern, player, x, y) {
   if(x >= 0 && x < state.length) {
     if(y >= 0 && y < state[x].length) {
       var element = pattern[0];
+      // Check whether the type of the part is 'p'
       if(element[0] == 'p') {
         if(state[x][y] !== player) {
           return false;
         }
-      } else if(element[0] == ' '){
+      } else if(element[0] == ' '){ // Check whether that the square is empty
         if(state[x][y] !== undefined) {
           return false;
         }
       }
+      /*
+      Check whether the pattern has more than one component in, if so then all the components
+      in the pattern have not been matched so therefore call the function to check the rest of the pattern.
+      The x and y cooridates are updated with the patterns second and third. If there is just one element in the pattern
+      then therefore we know the pattern has matched so return true.
+      */
       if(pattern.length > 1) {
         return match_pattern_at(state, pattern.slice(1), player, x + element[1], y + element[2])
       } else {
@@ -65,6 +76,10 @@ function match_pattern_at(state, pattern, player, x, y) {
   }
   return false;
 }
+/*
+Loops over all the squares in the state then uses the function match_pattern to check whether
+that pattern matches for the player at the the cooridates of idx1 / idx2. Firstly it clarify what a pattern is in the match_pattern_at function.
+*/
 function match_pattern(state, pattern, player) {
   for(var idx1 = 0; idx1 < state.length; idx1++) {
     for(var idx2 = 0; idx2 < state[idx1].length; idx2++) {
@@ -76,6 +91,13 @@ function match_pattern(state, pattern, player) {
   }
   return false;
 }
+/*
+Loops over a list of patterns in the pattern object. Then call the match_pattern function
+to check whether the pattern matches for the player. For the computer the score is added if the score
+is for the player then the score is taken away. Doing this determines how good the position is for the computer
+and the human player. A score which is under 0 means the human has the advantage and a score above 0 means the
+the computer player is in the benefit.
+*/
 function heuristic(state) {
   var score = 0;
   for(var idx = 0; idx < patterns.length; idx++) {
@@ -88,27 +110,15 @@ function heuristic(state) {
   }
   return score;
 }
-function down(a, b) {
-b = 5;
-while(state[a][b]) {
-  --b;
-  }
-}
-function alphabeta(state, limit, player, alpha, beta) {
+function minimax(state, limit, player) {
   var moves = []
   if(limit > 0) {
-    if(player === 'red') {
-      var cutoff = Number.MIN_VALUE;
-    } else {
-        var cutoff = Number.MAX_VALUE;
-    }
     for(var idx1 = 0; idx1 < 7; idx1++) {
       for(var idx2 = 0; idx2 < 6; idx2++) {
         if(state[idx1][idx2] === undefined) {
           /*
-          idx2 is the y axis so therefore drop this counter to the bottom row
-          if there a marker already in the position then move up a row till
-          next avaiable slot is found
+          Drop the y of the marker to 5 which is the bottom of the grid if that slot in unaviable
+          then move up the grid by one by taking 1 of 5
           */
           idx2 = 5;
           while(state[idx1][idx2]) {
@@ -117,45 +127,49 @@ function alphabeta(state, limit, player, alpha, beta) {
           var move = {
             x: idx1,
             y: idx2,
+            // This is to store the state after the move
             state: deepClone(state),
             score: 0
           };
           move.state[idx1][idx2] = player;
+          // Check whether the player is at a leaf in the game or is at the interal node
           if(limit === 1 || check_game_winner(move.state) !== undefined) {
+            // Handling the leaves
             move.score = heuristic(move.state);
             if(check_game_winner(move.state) !== undefined) {
               var winner = check_game_winner(move.state);
+              // If the winner is red the computer score to 1000 which shows a very good result
               if(winner === 'red') {
                 move.score = 1000;
-              } else if(winner === 'yellow') {
+              }
+              // If the winner is the player then set their score to -1000 which shows it's bad
+              else if(winner === 'yellow') {
                 move.score = -1000;
               }
             }
-          } else {
-            move.moves = alphabeta(move.state, limit - 1, player == 'yellow' ? 'red' : 'yellow', alpha, beta);
+          }
+          // Handling the internal node
+          else {
+            // Rescursivley caluclate all of the possible moves, the limit is reduced by 1 then the player is switched,
+            // the result of this is a list of all the possible moves which is on the move.state which is assigned to the variable
+            move.moves = minimax(move.state, limit - 1, player == 'yellow' ? 'red' : 'yellow');
+            // This is the first move so it has no score
             var score = undefined;
             for(var idx3 = 0; idx3 < move.moves.length; idx3++) {
+
               if(score === undefined) {
                 score = move.moves[idx3].score;
               } else if(player === 'yellow') {
+                // List of the next potential moves made by the computer and pick the best one
                 score = Math.max(score, move.moves[idx3].score);
               } else if(player === 'red') {
+                // List of next potential moves made by the player and then pick the worst move as it think's the player will choose this one
                 score = Math.min(score, move.moves[idx3].score);
               }
             }
             move.score = score;
           }
           moves.push(move);
-          if(player === 'red') {
-            cutoff = Math.max(cutoff, move.score);
-            alpha = Math.max(cutoff, alpha);
-          } else {
-            cutoff = Math.min(cutoff, move.score);
-            beta = Math.min(cutoff, beta);
-          }
-          if(beta <= alpha) {
-            return moves;
-          }
         }
       }
     }
@@ -258,36 +272,62 @@ function check_game_winner(state) {
     [[2, 5], [3, 5], [4, 5], [5, 5]],
     [[3, 5], [4, 5], [5, 5], [6, 5]],
   ];
+  //  Loop over all the patterns above
   for (let pidx = 0; pidx < patterns.length; pidx++) {
-    let pattern = patterns[pidx];
-    let winner = state[pattern[0][0]][pattern[0][1]];
+    let pattern = patterns[pidx]; //  Assign each pattern to the variable
+    let winner = state[pattern[0][0]][pattern[0][1]]; // Get the states current value at the pattern's first coordinates
     if (winner) {
+      //  Loop over all the cooridates at the index of 1 and if the winner coordinates do not match the cooridates of the pattern then therefore it is not a winning pattern
       for (let idx = 1; idx < pattern.length; idx++) {
         if (winner != state[pattern[idx][0]][pattern[idx][1]]) {
           winner = undefined;
           break;
         }
       }
+      // After checking all the cooridates in the pattern an it matches a winning pattern then return that it's a winner
       if (winner) {
         return winner;
+        console.log(pattern);
       }
     }
   }
-  //Assuming the game is a draw
   let draw = true;
-  //Loop through each square and if it's undefined then a draw is false
-    for (let x = 0; x <= 7; x++) {
-      for (let y = 0; y <= 6; y++) {
-        if (!state[x][y]) {
-          return undefined;
-        }
+  /*
+  Loop over all the 42 squares in the grid and check whether any of the sqaures
+  are undefined if so there are still sqaures avaible to be played in so therefore there is not a draw.
+  If all sqaures are not undefined and there is not an winner then therefore it is a draw.
+  */
+  for (let x = 0; x <= 7; x++) {
+    for (let y = 0; y <= 6; y++) {
+      if (!state[x][y]) {
+        return undefined;
       }
     }
-    return '';
   }
+  return '';
+}
 
 function computer_move(state) {
-  var moves = alphabeta(state, 4, 'red', Number.MIN_VALUE, Number.MAX_VALUE);
+  var moves = []
+  // Loop over each sqaure within the grid to check whether it is undefined (empty)
+  for(var idx1 = 0; idx1 < 7; idx1++) {
+    for(var idx2 = 0; idx2 < 6; idx2++) {
+      if(state[idx1][idx2] === undefined) {
+        /*
+        An object which handles the a potential move the computer can make with the properties
+        of it's x and y cooridates and the score of zero
+        */
+        var move = {
+          x: idx1,
+          y: idx2,
+          score: 0
+        };
+        moves.push(move);
+      }
+    }
+  }
+  // Loop over the rest of potential moves then pick a move which has the highest score then assign it to the move object
+  var moves = minimax(state, 4, 'red'); // Get the intial state and search to the depth of 4 which is 2 moves for each player and the red player is to go first in the heuristic calculation
   var max_score = undefined;
   var move = undefined;
   for(var idx = 0; idx < moves.length; idx++) {
@@ -301,159 +341,123 @@ function computer_move(state) {
   }
   return move;
 }
+
 export default Component.extend({
   playing: false,
   winner: undefined,
   draw: false,
   player_1: 0,
   player_2: 0,
-  turn: 'Player 1 Turn',
   desktop: true,
+  wait: false,
 
   init: function() {
     this._super(...arguments);
-    //Loading the three sounds
+    // Loading the three sounds
     createjs.Sound.registerSound("assets/sounds/click.wav", "place-maker");
     createjs.Sound.registerSound("assets/sounds/falling.mp3", "falling");
     createjs.Sound.registerSound("assets/sounds/correct.wav", "winner");
+    createjs.Sound.registerSound("assets/sounds/loser.wav", "loser");
     var component = this;
     document.addEventListener("deviceready", function() {
-      component.set("desktop", false);
-    })
-  },
+      if(!desktop) {
+        var height = document.getElementById('height');
+        height.classList.add('article_mobile');
+      }
+      if(shake) {
+        shake.startWatch(function() {
+          component.send("start");
+        });
+      }
+    component.send("start");
+  },false)
+},
 
   didInsertElement: function () {
+    // Gets the canvas in the html by accessing the ID of stage
     let stage = new createjs.Stage(this.$("#stage")[0]);
-    //draw the game board
+    // To create the drawing surface
     let board = new createjs.Shape();
     let graphics = board.graphics;
+    // Setting the color of the board
+    graphics.beginFill("#ffffff");
+    // To create a evenly spaced 7x6 grid each grid is 50x50 this is to draw the lines of the x axis
+    graphics.drawRect(1, 50, 350, 5);
+    graphics.drawRect(1, 100, 350, 2);
+    graphics.drawRect(1, 150, 350, 2);
+    graphics.drawRect(1, 200, 350, 2);
+    graphics.drawRect(1, 250, 350, 2);
+    graphics.drawRect(0, 300, 350, 2);
+    graphics.drawRect(0, 350, 355, 5);
 
-    //Adds a image to the board of a connect four grid
-    var grid = new createjs.Bitmap("assets/img/board.png");
-    //Place the grid in the middle of the move it down
-    grid.x = 20;
-    grid.y = 10;
-    stage.addChild(grid);
-    // graphics.beginFill("#ffffff");
-    // //This is for the lines of the x axis
-    // graphics.drawRect(0, 60, 700, 10);
-    // graphics.drawRect(0, 159, 700, 2);
-    // graphics.drawRect(1, 259, 700, 2);
-    // graphics.drawRect(1, 359, 700, 2);
-    // graphics.drawRect(1, 459, 700, 2);
-    // graphics.drawRect(1, 559, 700, 2);
-    // graphics.drawRect(0, 659, 709, 10);
-    //
-    // //This is for the lines of the y axis
-    // graphics.drawRect(0, 60, 10, 600);
-    // graphics.drawRect(99, 60, 2, 600);
-    // graphics.drawRect(199, 60, 2, 600);
-    // graphics.drawRect(299, 60, 2, 600);
-    // graphics.drawRect(399, 60, 2, 600);
-    // graphics.drawRect(499, 60, 2, 600);
-    // graphics.drawRect(599, 60, 2, 600);
-    // graphics.drawRect(699, 60, 10, 600);
-
-    // let yellow_box = new createjs.Shape();
-    // graphics = yellow_box.graphics;
-    // graphics.beginFill('#66ff66');
-    // graphics.drawRect(775, 150, 200, 200);
-    // stage.addChild(yellow_box);
-    //
-    // let red_box = new createjs.Shape();
-    // graphics = red_box.graphics;
-    // graphics.beginFill('#66ff66');
-    // graphics.drawRect(775, 425, 200, 200);
-    // stage.addChild(red_box);
-    //
-    // //Player Yellow Circle
-    // let yellow = new createjs.Shape();
-    // graphics = yellow.graphics;
-    // graphics.beginFill('#ffff00');
-    // graphics.setStrokeStyle(10);
-    // graphics.drawCircle(940, 185, 25, 25);
-    // stage.addChild(yellow);
-    //
-    //Player Red Circle
-    // let red = new createjs.Shape();
-    // graphics = red.graphics;
-    // graphics.beginFill('#FF0000');
-    // graphics.setStrokeStyle(10);
-    // graphics.drawCircle(800, 460, 25, 25);
-    // stage.addChild(red);
-
-    // var player_1 = new createjs.Text("Player 1", "30px Arial", "#ff7700");
-    // player_1.x = 790;
-    // player_1.y = 175;
-    // stage.addChild(player_1);
-    //
-    // var score_1 = new createjs.Text(this.player_1, "30px Arial", "#ff7700");
-    // score_1.x = 820;
-    // score_1.y = 240;
-    // stage.addChild(score_1);
-    //
-    // var score_2 = new createjs.Text(this.player_2, "30px Arial", "#ff7700");
-    // score_2.x = 820;
-    // score_2.y = 500;
-    // stage.addChild(score_2);
-    //
-    // var points = new createjs.Text("Points", "30px Arial", "#ff7700");
-    // points.x = 850;
-    // points.y = 240;
-    // stage.addChild(points);
-    //
-    // var player_2 = new createjs.Text("Player 2", "30px Arial", "#ff7700");
-    // player_2.x = 790;
-    // player_2.y = 450;
-    // stage.addChild(player_2);
-
-    board.x = 40;
-    board.y = -20;
-    // board.alpha = 0;
-    this.set('grid', grid);
+    // This is to the lines of the y axis
+    graphics.drawRect(0, 50, 5, 300);
+    graphics.drawRect(50, 50, 2, 300);
+    graphics.drawRect(100, 50, 2, 300);
+    graphics.drawRect(150, 50, 2, 300);
+    graphics.drawRect(200, 50, 2, 300);
+    graphics.drawRect(250, 50, 2, 300);
+    graphics.drawRect(300, 50, 2, 300);
+    graphics.drawRect(350, 50, 5, 300);
+    // Moving the board so it's central within the canvas
+    board.x = 2;
+    board.y = -30;
+    // Hide the board for the animation in the start function
+    board.alpha = 0;
     this.set('board', board);
+    // Adding the board on the canvas
     stage.addChild(board);
-
+    // Creating the markers to store within an array
     let markers = {
       'yellow': [],
       'red': []
     };
+    // For each player create 21 markers as their are 42 grid spaces
     for (let x = 0; x < 21; x++) {
-      let circleMarker = new createjs.Shape();
-      graphics = circleMarker.graphics;
-      //Fill the colour of the circle
-      graphics.beginFill('#FF0000');
-      graphics.setStrokeStyle(10);
-      graphics.drawCircle(0, 0, 36);
-      circleMarker.visible = false;
-      stage.addChild(circleMarker);
-      markers.red.push(circleMarker);
       //Create Player 1 Circle
-
-      let crossMarker = new createjs.Shape();
-      graphics = crossMarker.graphics;
-      //Fill the colour of the circle
+      let yellow = new createjs.Shape();
+      graphics = yellow.graphics;
+      // Fill the colour of the circle
       graphics.beginFill('#ffff00');
-      graphics.setStrokeStyle(0);
-      //The radius of the circle is 35
-      graphics.drawCircle(0, 0, 36);
-      //Set to false so therefore all counters are not visible at once
-      crossMarker.visible = false;
-      stage.addChild(crossMarker);
-      markers.yellow.push(crossMarker);
+      // The radius is 20 which is the size
+      graphics.drawCircle(0, 0, 20);
+      // Set to false so therefore all counters are not visible at once
+      yellow.visible = false;
+      stage.addChild(yellow);
+      markers.yellow.push(yellow);
+
+      // Create Player 2 Circle
+      let red = new createjs.Shape();
+      graphics = red.graphics;
+      // Fill the colour of the circle
+      graphics.beginFill('#FF0000');
+      graphics.drawCircle(0, 0, 20);
+      red.visible = false;
+      stage.addChild(red);
+      markers.red.push(red);
     }
+    // Get the makers to place then re draw onto the the stage
     this.set("markers", markers);
     this.set("stage", stage);
     createjs.Ticker.addEventListener('tick', stage);
   },
   check_winner: function () {
+    // Get the current value of the pattern first cooridates
     var state = this.get('state');
     var winner = check_game_winner(state);
     if(winner == 'yellow') {
+      createjs.Sound.play("winner");
       this.set('player_1', this.player_1 + 1);
       this.set('winner', 'You Won!');
     }
     if(winner == 'red') {
+      var markers = this.get('markers');
+      for(var idx = 0; idx < 21; idx++) {
+        for(var i =  1; idx < 5; idx) {
+        createjs.Tween.get(markers.red[idx]).to({y: 750}, 500).wait(500).to({y: -100});
+        }
+      }
+      createjs.Sound.play("loser");
       this.set('player_2', this.player_2 + 1);
       /*
       This variable creates a random number from 0 to 2 then the
@@ -468,85 +472,140 @@ export default Component.extend({
         this.set('winner', "Is That All You've Got!");
       }
       if(random == 2) {
-        this.set('winner', 'That Was Too Easy');
+        this.set('winner', 'That Was Too Easy!');
       }
     }
     if(winner !== undefined) {
       if(winner === '') {
         this.set('draw', true);
     } else {
-        this.set('turn', undefined);
-        createjs.Sound.play("winner");
+        // createjs.Sound.play("winner");
       }
     }
   },
+  willDestoryElement: function() {
+    this._super(...arguments);
+    if(shake) {
+      shake.stopWatch();
+    }
+  },
+  // The ev is the parameter which is the original browser click event
   click: function(ev) {
     var component = this;
-    if(component.get("playing") && !component.get("winner")) {
-      if(ev.target.tagName.toLowerCase() == 'canvas' && ev.offsetX >= 40 && ev.offsetY >= 20 && ev.offsetX < 800 && ev.offsetY < 800) {
-        let x = Math.floor((ev.offsetX - 20) / 90);
+    /*
+    Only handles clicks if user's are playing an winner has not won. It will only allow the user to click after the computer has placed their counter,
+    this is so a user cannot click loads of times and win
+    */
+    if(component.get("playing") && !component.get("winner") && !component.get("wait")) {
+      /*
+      Checks that it's the canvas being clicked on then, it will only handle clicks
+      within the board on the x axis from 0-355 and on y axis 20-300 because we moved the board down by 20
+      */
+      if(ev.target.tagName.toLowerCase() == 'canvas' && ev.offsetX >= 2 && ev.offsetY >= 20 && ev.offsetX < 395 && ev.offsetY < 320) {
+        // We moved the board 55 and each column is 50 so therefore it will caluclate the row
+        let x = Math.floor((ev.offsetX - 2) / 50);
         /*
         To allow the user to click any part in the column to drop their counter
         instead of dividing by 100 it is 700 because that is the height of the
         whole column
         */
-        let y = Math.floor((ev.offsetY - 20) / 480);
+        let y = Math.floor((ev.offsetY - 20) / 350);
         let state = component.get("state");
+        /*
+        Load the state and check whether its x & y cooridates are false as you
+        can't add another marker onto of a marker
+        */
         if (!state[x][y]) {
+          /*
+          Now that marker can be placed we drop the counter at the bottom
+          by assigning it's y axis to 5
+          */
           y = 5;
+          /*
+          While the state cooridates of x & y are true then move up the board
+          by --y which means minus 1 of y
+          */
           while(state[x][y]) {
             --y;
           }
+          // Each time a counter is dropped play this sound
           createjs.Sound.play("place-maker");
+          // Loading the move_count which tells us how many moves yellow player has made
           let move_count = component.get("moves")['yellow'];
+          // Then get next marker to place from inside the didInsertElement function
           let marker = component.get("markers")['yellow'][move_count];
           state[x][y] = 'yellow';
-          if (state[x][y] == 'yellow') {
-            component.set('turn', 'Player 2 Turn');
-          }
+          // Set the marker to true so it is visible
           marker.visible = true;
-          marker.x = 70 + x * 90;
-          // drop = 90 + y * 100;
+          if(state[x][y] == 'yellow' && window.plugins && window.plugins.toast) {
+            window.plugins.toast.showShortBottom('Red '+ ' to play next');
+          }
+          if (state[x][y] == 'yellow') {
+            var turn = document.getElementById('turn');
+            turn.classList.toggle("turn");
+          }
+          // Multiplying the x by 50 which is the size of a column
+          marker.x = 30 + x * 50;
           /*
           For the effect of dropping the marker this animation drops the marker
           from the top of the board, when it goes to the bottom of the slot it
           bounces back up into the middle of the slot giving the reality effect
           */
-          createjs.Tween.get(marker).to({y: 60 + y * 80}, 250)
-          .wait(100).to({y: 50 + y * 80});
-          // marker.y = 90 + y * 100;
-          // createjs.Tween.get(marker).to({y: marker.y}, 500);
-          component.check_winner();
+          createjs.Tween.get(marker).to({y: 50 + y * 50}, 250).wait(100).to({y: 45 + y * 50});
+          component.check_winner(); // Check whether that player has won after placing the counter
+          /*
+          Setting move_1 to plus 1 so therefore the next time the player places a marker
+          their marker will be choisen from the array created in the didInsertElement function
+          */
           component.get("moves")['yellow'] = move_count + 1;
+          // Set the variable to true which no means the user cannot click until the computer has made their move
+          component.set('wait', true);
+          // Putting the computer player within a timer of half a second to make a move to give it that reality effect
           setTimeout(function() {
+            // Check whether the user has won or if is a draw
             if(!component.get('winner') && !component.get('draw')) {
+              // Get the current state of the red marker
               var move = computer_move(state);
+              // Loading the move_count which tells us how many moves red player has made
               move_count = component.get('moves')['red'];
               state[move.x][move.y] = 'red';
-              if (state[move.x][move.y] == "red") {
-                component.set('turn', 'Player 1 Turn');
+              if(state[move.x][move.y] == 'red' && window.plugins && window.plugins.toast) {
+                window.plugins.toast.showShortBottom('Yellow '+ ' to play next');
               }
+              if (state[move.x][move.y] == "red") {
+                var turn = document.getElementById('turn');
+                turn.classList.remove("turn");
+              }
+              // Then get next marker to place from inside the didInsertElement function
               marker = component.get('markers')['red'][move_count];
+              // Set the marker to true so it is visible
               marker.visible = true;
-              marker.x = 70 + move.x * 90;
-              createjs.Tween.get(marker).to({y: 60 + move.y * 80}, 250)
-              .wait(100).to({y: 50 + move.y * 80});
-              // marker.y = 90 + move.y * 100;
+              marker.x = 30 + move.x * 50;
+              createjs.Sound.play("place-maker");
+              createjs.Tween.get(marker).to({y: 50 + move.y * 50}, 250).wait(100).to({y: 45 + move.y * 50});
               component.get('moves')['red'] = move_count + 1;
-              component.check_winner();
-              component.get('stage').update();
+              component.check_winner(); // Check whether that player has won after placing the counter
+              component.get('stage').update(); // Update the stage to show the counter
+              component.set('wait', false); // Setting the variable back to false this allows the human player to place their counter then
 
             }
-          }, 500);
+          }, 750);
         }
       }
     }
   },
   actions: {
     start: function () {
+      if(window.plugins && window.plugins.toast) {
+        window.plugins.toast.showShortBottom('Yellow to play next');
+      }
       var board = this.get('board');
       board.alpha = 0;
       if(this.get('playing')) {
+        setTimeout(function() {
+          var fade = document.getElementById('fade');
+          fade.classList.remove('fade');
+        }, 500);
         var markers = this.get('markers');
         for(var idx = 0; idx < 21; idx++) {
           /*
@@ -577,7 +636,12 @@ export default Component.extend({
       this.set("winner", undefined);
       this.set("draw", undefined);
       this.set("state", [
-        //Array for setting that no player has played a token within any of the slots
+        /*
+        The current game is stored within a state property with the line of code above
+        this property contains an array of 7 nested arrays. Within each array there are
+        6 undefined which represent columns, undefined means that no player has played
+        in this slot
+        */
         [undefined, undefined, undefined, undefined, undefined, undefined],
         [undefined, undefined, undefined, undefined, undefined, undefined],
         [undefined, undefined, undefined, undefined, undefined, undefined],
@@ -586,6 +650,10 @@ export default Component.extend({
         [undefined, undefined, undefined, undefined, undefined, undefined],
         [undefined, undefined, undefined, undefined, undefined, undefined]
       ]);
+      /*
+      Counts the number of moves each player has made so therefore in the click funtion
+      it whos turn it is to play
+      */
       this.set("moves", { 'yellow': 0, 'red': 0 });
       this.set("player", "yellow");
       var markers = this.get("markers");
@@ -594,13 +662,17 @@ export default Component.extend({
       the winner message takes the place of the turn message so therefore when the game is restarted
       this message will appear
       */
-      this.set('turn', 'Player 1 Turn');
+      createjs.Tween.get(board).wait(500).to({alpha: 1}, 1000);
       this.get("stage").update();
     },
+    // Restart button spin when clicked on
     restart: function() {
-      console.log('working');
-      var img = document.getElementById('restart');
-      img.classList("big");
+      var img = document.getElementById('restart'); //  Get the button by getting it's by its ID
+      img.classList.toggle("restart_img--rotate"); // Toggle the class so it spins forwards on first click and spins back on second click
     },
-  }
-});
+    fade: function() {
+      var fade = document.getElementById('fade');
+      fade.classList.add('fade');
+      }
+    }
+  })

@@ -1,68 +1,52 @@
-<section class="flex">
+<section class="">
   {{#if playing}}
-    {{#if winner}}
-      <h2 class="winner">{{winner}}</h2>
-    {{/if}}
-    {{#if draw}}
-      <h2>We'll call it a draw</h2>
-    {{/if}}
     {{#if desktop}}
-      <h2>{{turn}}</h2>
-      <a href="#"><h2  id="restart" {{action 'start'}} onclick={{action 'restart'}} class="restart_img">Restart</h2></a>
-      {{/if}}
+      <section class="mobile" id="fade">
+        <div>
+          <h2>Player 1</h2>
+          <img src="assets/img/Yellow_icon.svg.png" alt="" class="player_circle--mobile">
+        </div>
+        <!-- Score Board  -->
+        <div>
+          <h2>{{player_1}} - {{player_2}}</h2>
+          <img src="assets/img/restart.svg.png" class="player_circle--mobile restart_img--mobile" {{action 'start'}} onclick={{action 'fade'}}/>
+        </div>
+        <div>
+          <h2>Player 2</h2>
+          <img src="assets/img/Red_Circle(small).png" alt="" class="player_circle--mobile">
+        </div>
+        <!-- Underline which moves to indicate which players turn  -->
+        <div class="underline" id="turn"></div>
+      </section>
+  {{/if}}
   {{else}}
   {{#if desktop}}
-    <button {{action 'start'}}>Start</button>
-    <!-- <h1 class="app_title">How To Play</h1>
-    <p>
-      Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor
-      incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-      exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
-     </p> -->
+    <div class= "container">
+      <!-- Start up screen  -->
+      <section class="instruction">
+        <h1 class="app_title">How To Play</h1>
+        <!-- Tells the player on how to use the game  -->
+        <p>
+          Click a column to drop a marker into the grid. Play until a player has four of thier
+          markers in a row. A row can be horizontal, vertical or diagonal.
+         </p>
+         <button {{action 'fade'}} onclick={{action 'start'}}>Start</button>
+       </section>
+     </div>
   {{/if}}
 {{/if}}
 </section>
 
-<!-- <section class="mobile">
-  <div>
-    <h2>Player 1</h2>
-    <img src="assets/img/Yellow_icon.svg.png" alt="" class="player_circle--mobile">
-  </div>
-  <div>
-    <h2>{{player_1}} - {{player_2}}</h2>
-    <img src="assets/img/restart.svg.png" id="restart" class="player_circle--mobile" {{action 'start'}} onclick={{action 'restart'}}/>
-  </div>
-  <div>
-    <h2>Player 2</h2>
-    <img src="assets/img/Red_Circle(small).png" alt="" class="player_circle--mobile">
-  </div>
-</section> -->
 
-<!-- Do player name if have time -->
-<section class="desktop">
-  <section class="player_box player_box--1">
-    <div>
-      <p>Player 1</p>
-      <img src="assets/img/Yellow_icon.svg.png" alt="" class="player_circle">
-    </div>
-    <div>
-      <p>{{player_1}}</p>
-      <p>Points</p>
-    </div>
-  </section>
-  <section class="player_box player_box--2">
-    <div>
-      <p>Player 2</p>
-      <img src="assets/img/Red_Circle(small).png" alt="" class="player_circle">
-    </div>
-    <div>
-      <p>{{player_2}}</p>
-      <p>Points</p>
-    </div>
-  </section>
+<section class="bottom">
+  {{#if playing}}
+    {{#if winner}}
+      <h2 class="text">{{winner}}</h2>
+    {{/if}}
+    {{#if draw}}
+      <h2>We'll call it a draw</h2>
+    {{/if}}
+  {{/if}}
 </section>
-
-
-
-
-<canvas id='stage' width="800" height="550"></canvas>
+<!-- This creates the html canvas which allows me to draw on  -->
+<canvas id='stage' width="400" height="450"></canvas>
